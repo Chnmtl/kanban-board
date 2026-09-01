@@ -1,7 +1,7 @@
 import { TextField, Button, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { TagInputState } from '../types';
-import { TAG_COLORS } from '../constants';
+import { TAG_COLORS, MAX_TAGS } from '../constants';
 import { hasDuplicateTagNames } from '../utils';
 import { 
     DeleteButton, 
@@ -20,7 +20,10 @@ interface TagInputProps {
 }
 
 export const TagInput = ({ tags, onTagsChange, label = 'Tags' }: TagInputProps) => {
+    const atMax = tags.length >= MAX_TAGS;
+
     const addTag = () => {
+        if (atMax) return;
         onTagsChange([...tags, { name: '', color: TAG_COLORS[0] }]);
     };
 
@@ -75,8 +78,13 @@ export const TagInput = ({ tags, onTagsChange, label = 'Tags' }: TagInputProps) 
                 size="small"
                 variant="outlined"
                 onClick={addTag}
-                disabled={hasDuplicateTagNames(tags) || tags.some(t => !t.name.trim())}
+                disabled={atMax || hasDuplicateTagNames(tags) || tags.some(t => !t.name.trim())}
             >Add Tag</Button>
+            {atMax && (
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, opacity: 0.7 }}>
+                    Up to {MAX_TAGS} tags per task.
+                </Typography>
+            )}
             {hasDuplicateTagNames(tags) && (
                 <Typography color="error" variant="caption" sx={{ display: 'block', mt: 1 }}>
                     Duplicate tag names are not allowed.

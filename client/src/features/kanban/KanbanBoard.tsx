@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import Fab from '@mui/material/Fab';
 import { Column, Task, Tag, NewTaskState, EditTaskState, DeleteConfirmState, TagInputState } from './types';
-import { DEFAULT_COLUMNS, STORAGE_KEY, LEGACY_TAG_COLOR } from './constants';
+import { DEFAULT_COLUMNS, STORAGE_KEY, LEGACY_TAG_COLOR, MAX_TAGS } from './constants';
 import { isTaskWithTags, newTaskId, validateTags } from './utils';
 import { TagInput } from './components/TagInput';
 import {
@@ -19,6 +19,7 @@ import {
     DeleteButton,
     DeleteAllButton,
     TagRibbon,
+    TagRibbonSegment,
     TagLegendContainer,
     TagSwatch,
 } from './styles';
@@ -51,7 +52,7 @@ const KanbanBoard = () => {
                                 return {
                                     ...task,
                                     id: task.id || newTaskId(),
-                                    tags: rawTags.map(t =>
+                                    tags: rawTags.slice(0, MAX_TAGS).map(t =>
                                         typeof t === 'string'
                                             ? { name: t.slice(0, 5), color: LEGACY_TAG_COLOR }
                                             : t
@@ -269,7 +270,11 @@ const KanbanBoard = () => {
                                                         }}
                                                     >
                                                         {task.tags && task.tags.length > 0 && (
-                                                            <TagRibbon bgcolor={task.tags[0].color} />
+                                                            <TagRibbon>
+                                                                {task.tags.slice(0, MAX_TAGS).map((tag, i) => (
+                                                                    <TagRibbonSegment key={`${tag.name}-${tag.color}-${i}`} bgcolor={tag.color} />
+                                                                ))}
+                                                            </TagRibbon>
                                                         )}
                                                         <TaskCardContent>
                                                             <Typography fontWeight="bold">{task.name}</Typography>

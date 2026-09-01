@@ -129,7 +129,10 @@ export const TaskCard = styled(Card)(({ theme }) => {
         paddingTop: theme.spacing(1),
         paddingRight: theme.spacing(1),
         boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
-        transition: 'box-shadow 0.18s ease, transform 0.18s ease',
+        // Only transition box-shadow. @hello-pangea/dnd positions the card with
+        // an inline transform every frame during a drag; transitioning transform
+        // here makes the card lag the cursor and keep drifting after the drop.
+        transition: 'box-shadow 0.18s ease',
         '&:hover': {
             boxShadow: '0 6px 14px rgba(0,0,0,0.32)',
         },
@@ -193,17 +196,31 @@ export const DeleteAllButton = styled(Button)(({ theme }) => {
     };
 });
 
-export const TagRibbon = styled('div', {
-    shouldForwardProp: (prop) => prop !== 'bgcolor',
-})<{ bgcolor: string }>(({ bgcolor }) => ({
+// Full-height rail on the left edge of a card. It divides evenly among the
+// task's tags (up to MAX_TAGS), one colour band per tag.
+export const TagRibbon = styled('div')({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 5,
+    width: 6,
     height: '100%',
-    background: bgcolor,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     zIndex: 1,
     pointerEvents: 'none',
+});
+
+export const TagRibbonSegment = styled('div', {
+    shouldForwardProp: (prop) => prop !== 'bgcolor',
+})<{ bgcolor: string }>(({ bgcolor }) => ({
+    flex: 1,
+    minHeight: 0,
+    background: bgcolor,
+    // Hairline between adjacent bands so similar colours stay distinguishable.
+    '&:not(:last-of-type)': {
+        boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.22)',
+    },
 }));
 
 export const TagLegendContainer = styled(Box)(({ theme }) => ({

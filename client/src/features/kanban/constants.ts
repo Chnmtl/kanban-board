@@ -46,5 +46,9 @@ export const DEFAULT_COLUMNS: Column[] = [
 
 export const STORAGE_KEY = 'kanban-columns';
 
+// Most tags a single task can carry. The card ribbon splits into this many
+// segments at most, so more than this would just be invisible clutter.
+export const MAX_TAGS = 3;
+
 // Colour given to tags recovered from the pre-Tag-object storage format.
 export const LEGACY_TAG_COLOR = '#c9c6bc';

@@ -1,4 +1,5 @@
 import { Task } from './types';
+import { MAX_TAGS } from './constants';
 
 // Helper for migration type guard
 export function isTaskWithTags(task: unknown): task is Task {
@@ -19,6 +20,7 @@ export function hasDuplicateTagNames(tags: { name: string }[]) {
 
 // Returns the reason a tag list can't be saved, or null when it's fine.
 export function validateTags(tags: { name: string }[]): string | null {
+    if (tags.length > MAX_TAGS) return `A task can have at most ${MAX_TAGS} tags.`;
     if (tags.some(t => !t.name.trim())) return 'Give every tag a name, or remove the empty one.';
     if (hasDuplicateTagNames(tags)) return 'Tag names must be unique.';
     return null;
