@@ -84,10 +84,13 @@ export const BoardContainer = styled(Box)(({ theme }) => {
             gridTemplateColumns: `repeat(3, minmax(0, ${COLUMN_MAX}px))`,
             gap: theme.spacing(3),
             padding: theme.spacing(3),
-            // Single row again, so the board can take a fixed height and let
-            // each column scroll its own task list.
+            // Single row of a fixed height, so each column scrolls its own task
+            // list instead of a tall column stretching the row and spilling the
+            // cards out past the board frame. minmax(0, …) lets the row honour
+            // that cap rather than growing to fit its content.
             minHeight: '78vh',
             height: '78vh',
+            gridTemplateRows: 'minmax(0, 1fr)',
         },
     };
 });
@@ -96,9 +99,11 @@ export const ColumnPaper = styled(Paper)(({ theme }) => {
     const s = boardSurfaces[theme.palette.mode];
     return {
         // Sized by its grid track, so no min/max of its own; minWidth: 0 stops
-        // long card text from forcing the track wider than the board.
+        // long card text from forcing the track wider than the board, and
+        // minHeight: 0 lets the task list scroll instead of stretching the row.
         width: '100%',
         minWidth: 0,
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         padding: theme.spacing(2),
@@ -138,7 +143,9 @@ export const TasksBox = styled(Box)(({ theme }) => {
         flex: 1,
         paddingRight: 2,
         ...chalkScrollbar(s),
-        [theme.breakpoints.up(THREE_COLUMNS)]: { maxHeight: 'none' },
+        // In the fixed-height three-column layout the list must be free to
+        // shrink below its content so flex + overflow can scroll it.
+        [theme.breakpoints.up(THREE_COLUMNS)]: { maxHeight: 'none', minHeight: 0 },
     };
 });
 
@@ -156,7 +163,8 @@ export const TaskCard = styled(Card)(({ theme }) => {
         color: s.cardText,
         borderRadius: 6,
         border: `1px solid ${s.cardBorder}`,
-        paddingTop: theme.spacing(1),
+        // Room on the right for the hover delete button; the top/left/bottom
+        // spacing is all handled by TaskCardContent so the card stays even.
         paddingRight: theme.spacing(1),
         boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
         // Only transition box-shadow. @hello-pangea/dnd positions the card with
@@ -173,10 +181,12 @@ export const TaskCard = styled(Card)(({ theme }) => {
     };
 });
 
-export const TaskCardContent = styled(CardContent)({
+export const TaskCardContent = styled(CardContent)(({ theme }) => ({
     flexGrow: 1,
-    paddingBottom: 8,
-});
+    padding: theme.spacing(1.5),
+    // MUI adds extra bottom padding to a last child; keep it even instead.
+    '&:last-child': { paddingBottom: theme.spacing(1.5) },
+}));
 
 export const DeleteButton = styled(IconButton, {
     shouldForwardProp: (prop) => prop !== 'positioned',
@@ -226,36 +236,45 @@ export const DeleteAllButton = styled(Button)(({ theme }) => {
     };
 });
 
-// Full-height rail on the left edge of a card. It divides evenly among the
-// task's tags (up to MAX_TAGS), one colour band per tag.
-export const TagRibbon = styled('div')({
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 6,
-    height: '100%',
+// Tag pills under the card title, one per tag (up to MAX_TAGS). The chalk tag
+// palette is all light pastels, so dark text sits on every colour in both the
+// slate and whiteboard themes.
+export const TagChipRow = styled('div')(({ theme }) => ({
     display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    zIndex: 1,
-    pointerEvents: 'none',
-});
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.75),
+    marginTop: theme.spacing(0.75),
+    marginBottom: theme.spacing(0.75),
+}));
 
-export const TagRibbonSegment = styled('div', {
+export const TagChip = styled('span', {
     shouldForwardProp: (prop) => prop !== 'bgcolor',
 })<{ bgcolor: string }>(({ bgcolor }) => ({
-    flex: 1,
-    minHeight: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    lineHeight: 1,
+    letterSpacing: 0.3,
+    padding: '4px 9px',
+    borderRadius: 999,
+    color: '#2f3a33',
     background: bgcolor,
-    // Hairline between adjacent bands so similar colours stay distinguishable.
-    '&:not(:last-of-type)': {
-        boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.22)',
-    },
+    border: '1px solid rgba(0,0,0,0.18)',
+    whiteSpace: 'nowrap',
 }));
+
+// Usage tally shown after the tag name in the board summary chips.
+export const TagChipCount = styled('span')({
+    marginLeft: 6,
+    fontWeight: 800,
+    fontVariantNumeric: 'tabular-nums',
+    opacity: 0.6,
+});
 
 export const TagLegendContainer = styled(Box)(({ theme }) => ({
     display: 'flex',
-    gap: theme.spacing(2),
+    gap: theme.spacing(0.75),
     alignItems: 'center',
     margin: `${theme.spacing(2)} 0`,
     flexWrap: 'wrap',
@@ -319,16 +338,4 @@ export const ColorSwatch = styled(Box, {
     cursor: 'pointer',
     outline: 'none',
     transition: 'border 0.2s, box-shadow 0.2s',
-}));
-
-export const TagSwatch = styled('span', {
-    shouldForwardProp: (prop) => prop !== 'bgcolor',
-})<{ bgcolor: string }>(({ bgcolor, theme }) => ({
-    display: 'inline-block',
-    width: 14,
-    height: 14,
-    borderRadius: '50%',
-    background: bgcolor,
-    marginRight: theme.spacing(1),
-    verticalAlign: 'middle',
 }));

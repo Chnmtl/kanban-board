@@ -18,10 +18,10 @@ import {
     TaskCardContent,
     DeleteButton,
     DeleteAllButton,
-    TagRibbon,
-    TagRibbonSegment,
+    TagChipRow,
+    TagChip,
+    TagChipCount,
     TagLegendContainer,
-    TagSwatch,
 } from './styles';
 
 const KanbanBoard = () => {
@@ -211,20 +211,29 @@ const KanbanBoard = () => {
 
     return (
         <>
-            {/* Tag Legend and Delete All Button */}
+            {/* Per-tag usage summary and Delete All button */}
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <TagLegendContainer>
-                    {Array.from(new Set(columns.flatMap(col => col.tasks.flatMap(task => task.tags || []))
-                        .map(tag => `${tag.name}|${tag.color}`)))
-                        .map(key => {
-                            const [name, color] = key.split('|');
-                            return (
-                                <Box key={key} display="flex" alignItems="center">
-                                    <TagSwatch bgcolor={color} />
-                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>{name}</Typography>
-                                </Box>
-                            );
-                        })}
+                    {(() => {
+                        // Count how many cards carry each tag, keeping first-seen order.
+                        const tally = new Map<string, { name: string; color: string; count: number }>();
+                        for (const col of columns) {
+                            for (const task of col.tasks) {
+                                for (const tag of task.tags || []) {
+                                    const key = `${tag.name}|${tag.color}`;
+                                    const hit = tally.get(key);
+                                    if (hit) hit.count += 1;
+                                    else tally.set(key, { name: tag.name, color: tag.color, count: 1 });
+                                }
+                            }
+                        }
+                        return Array.from(tally.values()).map(({ name, color, count }) => (
+                            <TagChip key={`${name}|${color}`} bgcolor={color}>
+                                {name}
+                                <TagChipCount>{count}</TagChipCount>
+                            </TagChip>
+                        ));
+                    })()}
                 </TagLegendContainer>
                 <DeleteAllButton
                     variant="contained"
@@ -269,15 +278,15 @@ const KanbanBoard = () => {
                                                             setEditValues({ name: task.name, description: task.description });
                                                         }}
                                                     >
-                                                        {task.tags && task.tags.length > 0 && (
-                                                            <TagRibbon>
-                                                                {task.tags.slice(0, MAX_TAGS).map((tag, i) => (
-                                                                    <TagRibbonSegment key={`${tag.name}-${tag.color}-${i}`} bgcolor={tag.color} />
-                                                                ))}
-                                                            </TagRibbon>
-                                                        )}
                                                         <TaskCardContent>
                                                             <Typography fontWeight="bold">{task.name}</Typography>
+                                                            {task.tags && task.tags.length > 0 && (
+                                                                <TagChipRow>
+                                                                    {task.tags.slice(0, MAX_TAGS).map((tag, i) => (
+                                                                        <TagChip key={`${tag.name}-${tag.color}-${i}`} bgcolor={tag.color}>{tag.name}</TagChip>
+                                                                    ))}
+                                                                </TagChipRow>
+                                                            )}
                                                             {/* Restrict description to 5 lines in card display (not in modal) */}
                                                             <Typography variant="body2" color="text.secondary" sx={{
                                                                 display: '-webkit-box',
