@@ -38,3 +38,6 @@ obj/
 *.db
 *.db-shm
 *.db-wal
+
+# Claude Code local config
+.claude/

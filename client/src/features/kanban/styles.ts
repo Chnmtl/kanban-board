@@ -32,10 +32,22 @@ const chalkScrollbar = (s: Surfaces) => ({
 const chalkDust =
     "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E\")";
 
+// Column-count breakpoints. Under the first the board shows one column, then
+// two, and above the second all three sit side by side. The values are the
+// viewport widths at which the next column still has roughly 280px to itself
+// once the page container, the frame and the gaps are taken out.
+const TWO_COLUMNS = 700;
+const THREE_COLUMNS = 1050;
+
+// Widest a single column may grow to, so cards don't stretch into unreadable
+// bands on a large monitor once the grid tracks are free to expand.
+const COLUMN_MAX = 400;
+
 export const BoardFrame = styled(Box)(({ theme }) => {
     const s = boardSurfaces[theme.palette.mode];
     return {
-        padding: theme.spacing(1.5),
+        padding: theme.spacing(1),
+        [theme.breakpoints.up(TWO_COLUMNS)]: { padding: theme.spacing(1.5) },
         borderRadius: 14,
         background: `linear-gradient(160deg, ${s.frame} 0%, ${s.frameEdge} 100%)`,
         boxShadow:
@@ -48,32 +60,45 @@ export const BoardFrame = styled(Box)(({ theme }) => {
 export const BoardContainer = styled(Box)(({ theme }) => {
     const s = boardSurfaces[theme.palette.mode];
     return {
-        display: 'flex',
-        gap: theme.spacing(3),
-        padding: theme.spacing(3),
-        minHeight: '78vh',
-        height: '78vh',
-        // "safe center" centres while there is room but falls back to
-        // flex-start once the columns overflow, so the first column can't be
-        // pushed off the unreachable left edge.
-        justifyContent: 'safe center',
+        // A grid rather than a scrolling flex row: the columns reflow onto
+        // extra rows as the viewport narrows instead of running off the right
+        // edge behind a horizontal scrollbar.
+        display: 'grid',
+        gridTemplateColumns: `minmax(0, ${COLUMN_MAX}px)`,
+        gap: theme.spacing(2),
+        padding: theme.spacing(2),
+        justifyContent: 'center',
         alignItems: 'stretch',
         borderRadius: 8,
         backgroundColor: s.board,
         backgroundImage: `${chalkDust}, radial-gradient(ellipse at 50% 0%, ${s.board} 0%, ${s.boardEdge} 100%)`,
         backgroundBlendMode: theme.palette.mode === 'dark' ? 'overlay' : 'multiply',
         boxShadow: 'inset 0 2px 18px rgba(0,0,0,0.35)',
-        overflowX: 'auto',
         ...chalkScrollbar(s),
+        [theme.breakpoints.up(TWO_COLUMNS)]: {
+            gridTemplateColumns: `repeat(2, minmax(0, ${COLUMN_MAX}px))`,
+            gap: theme.spacing(2.5),
+            padding: theme.spacing(2.5),
+        },
+        [theme.breakpoints.up(THREE_COLUMNS)]: {
+            gridTemplateColumns: `repeat(3, minmax(0, ${COLUMN_MAX}px))`,
+            gap: theme.spacing(3),
+            padding: theme.spacing(3),
+            // Single row again, so the board can take a fixed height and let
+            // each column scroll its own task list.
+            minHeight: '78vh',
+            height: '78vh',
+        },
     };
 });
 
 export const ColumnPaper = styled(Paper)(({ theme }) => {
     const s = boardSurfaces[theme.palette.mode];
     return {
-        flex: 1,
-        minWidth: 300,
-        maxWidth: 380,
+        // Sized by its grid track, so no min/max of its own; minWidth: 0 stops
+        // long card text from forcing the track wider than the board.
+        width: '100%',
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         padding: theme.spacing(2),
@@ -105,10 +130,15 @@ export const TasksBox = styled(Box)(({ theme }) => {
     const s = boardSurfaces[theme.palette.mode];
     return {
         minHeight: 200,
+        // While the columns are stacked the board has no fixed height, so the
+        // list is capped here instead — otherwise one full column makes the
+        // page scroll on forever.
+        maxHeight: '55vh',
         overflowY: 'auto',
         flex: 1,
         paddingRight: 2,
         ...chalkScrollbar(s),
+        [theme.breakpoints.up(THREE_COLUMNS)]: { maxHeight: 'none' },
     };
 });
 
