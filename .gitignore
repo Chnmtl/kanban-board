@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Editor/IDE
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.user
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# .NET build output
+bin/
+obj/
+
+# SQLite database files — created at runtime from migrations
+*.db
+*.db-shm
+*.db-wal
